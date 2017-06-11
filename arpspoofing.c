@@ -31,19 +31,54 @@ int main(int argc, char *argv[])
 	char HLEN[]  = {0x06};        // HARDWARE SIZE = 6
 	char PLEN[]  = {0x04};        // PROTOCOL SIZE = 4
 	char OPER[]  = {0x00, 0x02};  // OPERATION 1 TO REQUEST. 2 TO REPLY
+	unsigned char TPA[4];
+	unsigned char SPA[4];
 
-	 /* mock */
-    char SHA[] = {0x08, 0x00, 0x27, 0x4b, 0xd6, 0xd3}; // meu mac
-    char SPA[] = {0xc0, 0xa8, 0x00, 0x01}; // roteador ip
-    char THA[] = {0x08, 0x00, 0x27, 0x4b, 0xd6, 0xd3}; // meu mac
-    char TPA[] = {0xc0, 0xa8, 0x00, 0x0b}; // ip lu final 27
-    /* mock */
-
-
-	if (argc != 2) {
-		printf("Usage: %s iface\n", argv[0]);
+	if (argc != 4) {
+		printf("param 1: ip alvo\n param 2: ip roteador");
 		return 1;
 	}
+
+	// ip target
+	unsigned char firstOctetHex, secondOctetHex, thirdOctetHex, fourthOctetHex; 
+	short int firstOctet, secondOctet, thirdOctet, fourthOctet;
+
+	sscanf(argv[2], "%d.%d.%d.%d.", &firstOctet, &secondOctet, &thirdOctet, &fourthOctet);
+
+	firstOctetHex  = (char) firstOctet;
+	secondOctetHex = (char) secondOctet;
+	thirdOctetHex  = (char) thirdOctet;
+	fourthOctetHex = (char) fourthOctet;
+	
+	TPA[0] = firstOctetHex;
+	TPA[1] = secondOctetHex;
+	TPA[2] = thirdOctetHex;
+	TPA[3] = fourthOctetHex;
+
+	printf("0x%0x\n", TPA[0]);
+	printf("0x%0x\n", TPA[1]);
+	printf("0x%0x\n", TPA[2]);
+	printf("0x%0x\n", TPA[3]);
+
+	
+	// ip router
+	sscanf(argv[3], "%d.%d.%d.%d.", &firstOctet, &secondOctet, &thirdOctet, &fourthOctet);
+
+	firstOctetHex  = (char) firstOctet;
+	secondOctetHex = (char) secondOctet;
+	thirdOctetHex  = (char) thirdOctet;
+	fourthOctetHex = (char) fourthOctet;
+	
+	SPA[0] = firstOctetHex;
+	SPA[1] = secondOctetHex;
+	SPA[2] = thirdOctetHex;
+	SPA[3] = fourthOctetHex;
+
+	printf("0x%0x\n", SPA[0]);
+	printf("0x%0x\n", SPA[1]);
+	printf("0x%0x\n", SPA[2]);
+	printf("0x%0x\n", SPA[3]);
+
 	strcpy(ifname, argv[1]);
 
 	/* Cria um descritor de socket do tipo RAW */
@@ -66,7 +101,23 @@ int main(int argc, char *argv[])
 	if (ioctl(fd, SIOCGIFHWADDR, &if_mac) < 0) {
 		perror("SIOCGIFHWADDR");
 		exit(1);
-	}
+	}	
+
+	// meu mac
+	unsigned char SHA[] = { if_mac.ifr_hwaddr.sa_data[0],
+							if_mac.ifr_hwaddr.sa_data[1],
+							if_mac.ifr_hwaddr.sa_data[2],
+							if_mac.ifr_hwaddr.sa_data[3],
+							if_mac.ifr_hwaddr.sa_data[4],
+							if_mac.ifr_hwaddr.sa_data[5] };
+	
+	// meu mac
+	unsigned char THA[] = { if_mac.ifr_hwaddr.sa_data[0],
+							if_mac.ifr_hwaddr.sa_data[1],
+							if_mac.ifr_hwaddr.sa_data[2],
+							if_mac.ifr_hwaddr.sa_data[3],
+							if_mac.ifr_hwaddr.sa_data[4],
+							if_mac.ifr_hwaddr.sa_data[5] };
 
 	/* Indice da interface de rede */
 	socket_address.sll_ifindex = if_idx.ifr_ifindex;
@@ -95,6 +146,7 @@ int main(int argc, char *argv[])
 	frame_len += sizeof(ethertype);
 
 
+	/* ARP */
 	memcpy(buffer + frame_len, HTYPE, sizeof(HTYPE));
     frame_len += sizeof(HTYPE);
 
@@ -122,20 +174,19 @@ int main(int argc, char *argv[])
     memcpy(buffer + frame_len, TPA, sizeof(TPA));
     frame_len += sizeof(TPA);
 
-    // for (int i = 0; i < sizeof(buffer); i++) {
-    //         printf("%02x ", buffer[i]);
-    // }
+	while (1) {
 
+		/* Envia pacote */
+		if (sendto(fd, buffer, frame_len, 0, (struct sockaddr *) &socket_address, sizeof (struct sockaddr_ll)) < 0) {
+			perror("send");
+			close(fd);
+			exit(1);
+		}
 
+		sleep(2);
 
-	/* Envia pacote */
-	if (sendto(fd, buffer, frame_len, 0, (struct sockaddr *) &socket_address, sizeof (struct sockaddr_ll)) < 0) {
-		perror("send");
-		close(fd);
-		exit(1);
+		printf("Arp reply enviado.\n");
 	}
-
-	printf("Pacote enviado.\n");
 
 	close(fd);
 	return 0;
