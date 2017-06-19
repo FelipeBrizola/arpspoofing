@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
 	/* Monta o cabecalho Ethernet */
 
 	/* Preenche o campo de endereco MAC de destino */
-	memcpy(buffer_reply_target, dest_mac, MAC_ADDR_LEN);
+	memcpy(buffer_reply_target, targetMac, MAC_ADDR_LEN);
 	frame_len += MAC_ADDR_LEN;
 
 	/* Preenche o campo de endereco MAC de origem */
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
 	/* Monta o cabecalho Ethernet */
 
 	/* Preenche o campo de endereco MAC de destino */
-	memcpy(buffer_reply_router, dest_mac, MAC_ADDR_LEN);
+	memcpy(buffer_reply_router, routerMac, MAC_ADDR_LEN);
 	frame_len += MAC_ADDR_LEN;
 
 	/* Preenche o campo de endereco MAC de origem */
