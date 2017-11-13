@@ -15,3 +15,7 @@ iptables -t nat -A PREROUTING -p tcp --dport 80 --jump DNAT --to-destination ‘
 apt-get install apache2
 
 echo “esse site eh falso!!” > /var/www/html/index.html
+
+
+redes 2
+desabilita forwarding e derrubar cliente 
