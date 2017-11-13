@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	memset(unknownMac, 0, sizeof(unknownMac));
 
 	if (argc != 5) {
-		printf("param 1: ip alvo\n param 2: ip roteador");
+		printf("param 1: interface de rede\nparam 2: meu ip \n param 3: ip alvo\n param 4: ip roteador");
 		return 1;
 	}
 
